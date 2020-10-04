@@ -21,7 +21,7 @@ PageRank is a website page ranking algorithm from Google.<br/>
 PageRank was originally used to calculate the importance of web pages. The entire www can be seen as a directed graph, and the node is a web page.<br/>
 This algorithm can caculate all node's importance by their connections.<br/>
 * My algorithm changed the iterative algorithm to make the algorithm much faster, it costs 10ms per article, on the mean while TextRank4ZH costs 80ms on my data.<br/>
-* My algorithm also use word2vec to make the abstract more accurate, but it will cost more time to run the algorithm. Using word2vec costs 40ms per article on the same traning data.
+* My algorithm also use word2vec to make the abstract more accurate, but it will cost more time to run the algorithm. Using word2vec costs 40ms per article on the same training data.
 
 ## FastTextRank4Sentence
 ### Introduction
