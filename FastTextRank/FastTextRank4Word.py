@@ -78,8 +78,8 @@ class FastTextRank4Word(object):
         scores = util.weight_map_rank(graph,max_iter=self.__max_iter,tol=self.__tol)
         sent_selected = nlargest(n, zip(scores, count()))
         sent_index = []
-        for i in range(n):
-            sent_index.append(sent_selected[i][1])  # 添加入关键词在原来文章中的下标
+        for worditem in sent_selected:
+            sent_index.append(worditem[1])  # 添加入关键词在原来文章中的下标
         return [index_word[i] for i in sent_index]
 
 
