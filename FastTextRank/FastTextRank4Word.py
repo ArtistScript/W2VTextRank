@@ -19,6 +19,7 @@ class FastTextRank4Word(object):
         :param window: 词语窗口
         :return:
         """
+        self.__text = ''
         self.__use_stopword = use_stopword
         self.__max_iter = max_iter
         self.__tol = tol
@@ -67,7 +68,7 @@ class FastTextRank4Word(object):
         return graph
 
     def get_keywords(self, text, keywords_num = None):
-        self.text = text #original raw text
+        self.__text = text #original raw text
         # text = text.replace('\n', '')
         # text = text.replace('\r', '')
         text = util.as_text(text)#处理编码问题
@@ -114,7 +115,7 @@ class FastTextRank4Word(object):
                 keyphrases.add(''.join(one))
 
         return [phrase for phrase in keyphrases
-                if self.text.count(phrase) >= min_occur_num]
+                if self.__text.count(phrase) >= min_occur_num]
 
     def get_keyphrases_according_to_keywords(self, keywords, min_occur_num = 2):
         """根据关键词获取关键短语。
@@ -142,4 +143,4 @@ class FastTextRank4Word(object):
                 keyphrases.add(''.join(one))
 
         return [phrase for phrase in keyphrases
-                if self.text.count(phrase) >= min_occur_num]
+                if self.__text.count(phrase) >= min_occur_num]
