@@ -25,6 +25,7 @@ class FastTextRank4Word(object):
         self.__window = window
         self.__stop_words = set()
         self.__stop_words_file = self.get_default_stop_words_file()
+        self.__sentences = [] # original segged sentences
         if type(stop_words_file) is str:
             self.__stop_words_file = stop_words_file
         if use_stopword:
@@ -65,21 +66,80 @@ class FastTextRank4Word(object):
                     graph[index2][index1] += 1.0
         return graph
 
-    def summarize(self,text,n):
-        text = text.replace('\n', '')
-        text = text.replace('\r', '')
+    def get_keywords(self, text, keywords_num = None):
+        self.text = text #original raw text
+        # text = text.replace('\n', '')
+        # text = text.replace('\r', '')
         text = util.as_text(text)#处理编码问题
-        tokens=util.cut_sentences(text)
-        #sentences用于记录文章最原本的句子，sents用于各种计算操作
-        sentences,sents=util.psegcut_filter_words(tokens,self.__stop_words,self.__use_stopword)
+        sentences=util.cut_sentences(text)# this text here means a full text content ; all in one line
+        #sentences用于记录已分词文章最原本的句子，wordlist_sents用于提取关键词
+        sentences,wordlist_sents=util.psegcut_filter_words(sentences, self.__stop_words, self.__use_stopword)
 
-        word_index, index_word, words_number=self.build_worddict(sents)
-        graph=self.build_word_grah(sents,words_number,word_index,window=self.__window)
+        self.__sentences = sentences
+
+        word_index, index_word, words_number=self.build_worddict(wordlist_sents)
+        graph=self.build_word_grah(wordlist_sents,words_number,word_index,window=self.__window)
         scores = util.weight_map_rank(graph,max_iter=self.__max_iter,tol=self.__tol)
-        sent_selected = nlargest(n, zip(scores, count()))
-        sent_index = []
-        for worditem in sent_selected:
-            sent_index.append(worditem[1])  # 添加入关键词在原来文章中的下标
-        return [index_word[i] for i in sent_index]
+        if keywords_num is None:
+            keywords_num = int(words_number/3)
+            keywords_selected = nlargest(keywords_num, zip(scores, count()))
+        else:
+            keywords_selected = nlargest(keywords_num, zip(scores, count()))
 
+        return [(index_word[item[1]],item[0]) for item in keywords_selected]# item: [(score,word_index) list]
 
+    def get_keyphrases(self, text, keywords_num, min_occur_num = 2):
+        """获取关键短语。
+        获取 keywords_num 个关键词构造的可能出现的短语。
+
+        Return:
+        关键短语的列表。
+        """
+        keywords_set = set([item[0] for item in self.get_keywords(text, keywords_num)])
+        keyphrases = set()
+        for sentence in self.__sentences:
+            one = []
+            for word in sentence:
+                if word in keywords_set:
+                    one.append(word)
+                else:
+                    if len(one) >  1:
+                        keyphrases.add(''.join(one))
+                    if len(one) == 0:
+                        continue
+                    else:
+                        one = []
+            # 兜底
+            if len(one) >  1:
+                keyphrases.add(''.join(one))
+
+        return [phrase for phrase in keyphrases
+                if self.text.count(phrase) >= min_occur_num]
+
+    def get_keyphrases_according_to_keywords(self, keywords, min_occur_num = 2):
+        """根据关键词获取关键短语。
+        获取 keywords关键词构造的可能出现的短语。
+
+        Return:
+        关键短语的列表。
+        """
+        keywords_set = set(keywords)
+        keyphrases = set()
+        for sentence in self.__sentences:
+            one = []
+            for word in sentence:
+                if word in keywords_set:
+                    one.append(word)
+                else:
+                    if len(one) >  1:
+                        keyphrases.add(''.join(one))
+                    if len(one) == 0:
+                        continue
+                    else:
+                        one = []
+            # 兜底
+            if len(one) >  1:
+                keyphrases.add(''.join(one))
+
+        return [phrase for phrase in keyphrases
+                if self.text.count(phrase) >= min_occur_num]
