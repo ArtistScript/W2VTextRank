@@ -115,16 +115,43 @@ def load_keywords_and_keyphrases(jsonfile):
                 keyphrases.update(data["phrases"])
         return keywords, keyphrases
 
+def load_keywords_and_keyphrases_freq(jsonfile):
+    keywords = {}
+    keyphrases = {}
+    with codecs.open(jsonfile, "rb", "utf-8") as fin:
+        for line in fin:
+            line = line.strip()
+            data = json.loads(line)
+            if data["keywords"]:
+                for w,s in data["keywords"]:
+                    if w in keywords:
+                        keywords[w] += 1
+                    else:
+                        keywords[w] = 1
+
+            if data["phrases"]:
+                for p in data["phrases"]:
+                    if p in keyphrases:
+                        keyphrases[p] += 1
+                    else:
+                        keyphrases[p] = 1
+        return keywords, keyphrases
 
 
 if __name__ == "__main__":
     # demo() # read a whole file to get a subject text content
 
     # one subject content text per line in file
-    filein = "test.txt"#"test.txt"#"text1.txt"
+    filein = "text1.txt"#"test.txt"#"text1.txt"
     fileout = "key1.json"
     get_keywords_and_keyphrase2jsonfile(filein, fileout, nlines_per_content=1, min_occur_num=2)
 
     # keywords, keyphrases = load_keywords_and_keyphrases(fileout)
     # print(keywords)
+    # print(keyphrases)
+
+    # keywords, keyphrases = load_keywords_and_keyphrases_freq(fileout)
+    # keywords = sorted(keywords.items(), key=lambda item:item[1], reverse=True)
+    # print(keywords)
+    # keyphrases = sorted(keyphrases.items(), key=lambda item:item[1], reverse=True)
     # print(keyphrases)
