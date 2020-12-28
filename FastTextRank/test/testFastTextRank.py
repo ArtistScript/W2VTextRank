@@ -2,6 +2,8 @@ from FastTextRank.FastTextRank4Word import FastTextRank4Word
 import codecs
 import datetime
 
+import json
+
 # mod = FastTextRank4Word(tol=0.0001,window=2)
 # with open("text1.txt", "r", encoding='utf-8') as myfile:
 # old_time = datetime.datetime.now()
@@ -45,14 +47,16 @@ def get_keywords_and_keyphrase2jsonfile(filein, fileout, nlines_per_content=100,
     '''
 
     :param filein: text file ,one subject content text per line in file
-    :param fileout: json file, ["keywords":[(k1,s1),(k2,s2),...], "phrase":[p1,p2,...]]
+    :param fileout: json file, {"keywords":[(k1,s1),(k2,s2),...], "phrases":[p1,p2,...]}
     :return: None
     '''
     mod = FastTextRank4Word(use_stopword=True, tol=0.0001,window=2)
-    with codecs.open(filein, "rb", encoding='utf-8') as fin:
+    with codecs.open(filein, "rb", encoding='utf-8') as fin, \
+        codecs.open(fileout, "wb", "utf-8") as fout:
         line_cnt = 0
         line_cache = []
         for line in fin:
+            res = {}
             line = line.strip()
             if line_cnt < nlines_per_content:
                 line_cnt += 1
@@ -62,29 +66,55 @@ def get_keywords_and_keyphrase2jsonfile(filein, fileout, nlines_per_content=100,
                 line_cnt = 0
                 text = ' '.join(line_cache)
                 keywords_score_list = mod.get_keywords(text)
+                # write to json file
+                res["keywords"] = keywords_score_list
+
                 # print('keywords num=%d:' % len(keywords_score_list))
                 # for keyword,score in keywords_score_list:
                 #     print(keyword,score)
 
                 keywordslist = [k for k,s in keywords_score_list]
                 keyphrases = mod.get_keyphrases_according_to_keywords(keywordslist,min_occur_num)
-                print('keyphrases num=%d:' % len(keyphrases))
-                for keyphrase in keyphrases:
-                    print(keyphrase)
+                res["phrases"] = keyphrases
+                json_str = json.dumps(res, ensure_ascii=False)
+                fout.write("%s\n" % json_str)
+                if len(keyphrases):
+                    print('keyphrases num=%d:' % len(keyphrases))
+                    for keyphrase in keyphrases:
+                        print(keyphrase)
 
                 line_cache = []
         if line_cache:#
             text = ' '.join(line_cache)
             keywords_score_list = mod.get_keywords(text)
+            res["keywords"] = keywords_score_list
             # print('keywords num=%d:' % len(keywords_score_list))
             # for keyword,score in keywords_score_list:
             #     print(keyword,score)
 
             keywordslist = [k for k,s in keywords_score_list]
             keyphrases = mod.get_keyphrases_according_to_keywords(keywordslist,min_occur_num)
-            print('keyphrases num=%d:' % len(keyphrases))
-            for keyphrase in keyphrases:
-                print(keyphrase)
+            res["phrases"] = keyphrases
+            json_str = json.dumps(res, ensure_ascii=False)
+            fout.write("%s\n" % json_str)
+            if len(keyphrases):
+                    print('keyphrases num=%d:' % len(keyphrases))
+                    for keyphrase in keyphrases:
+                        print(keyphrase)
+
+def load_keywords_and_keyphrases(jsonfile):
+    keywords = set()
+    keyphrases = set()
+    with codecs.open(jsonfile, "rb", "utf-8") as fin:
+        for line in fin:
+            line = line.strip()
+            data = json.loads(line)
+            if data["keywords"]:
+                keywords.update([w for w,s in data["keywords"]])
+            if data["phrases"]:
+                keyphrases.update(data["phrases"])
+        return keywords, keyphrases
+
 
 
 if __name__ == "__main__":
@@ -94,3 +124,7 @@ if __name__ == "__main__":
     filein = "test.txt"#"test.txt"#"text1.txt"
     fileout = "key1.json"
     get_keywords_and_keyphrase2jsonfile(filein, fileout, nlines_per_content=1, min_occur_num=2)
+
+    # keywords, keyphrases = load_keywords_and_keyphrases(fileout)
+    # print(keywords)
+    # print(keyphrases)
