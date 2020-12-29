@@ -67,22 +67,31 @@ def cut_filter_words(cutted_sentences,stopwords,use_stopwords=False):
             sents.append([word for word in jieba.cut(sent) if word])
     return sentences,sents
 
-def psegcut_filter_words(cutted_sentences,stopwords,use_stopwords=True,use_speech_tags_filter=True):
-    sents = []
-    sentences = []
-    for sent in cutted_sentences:
-        sentences.append(sent)
-        jieba_result = pseg.cut(sent)
-        if use_speech_tags_filter == True:
-            jieba_result = [w for w in jieba_result if w.flag in allow_speech_tags]
-        else:
-            jieba_result = [w for w in jieba_result]
-        word_list = [w.word.strip() for w in jieba_result if w.flag != 'x']
-        word_list = [word for word in word_list if len(word) > 0]
+def psegcut_filter_words(ori_sentences, stopwords,use_stopwords=True, use_speech_tags_filter=True):
+    wordlist_sents = []
+    segged_sentences = []
+    for ori_sent in ori_sentences:
+        jieba_result = pseg.cut(ori_sent)# return generator, can only be used once
+
+        # add segged result to sentences for future to get the keyphrase
+        word_list = []
+        sent_list = []
+        for word,tag in jieba_result:
+            word = word.strip()
+            if len(word) > 0:
+                if use_speech_tags_filter == True:
+                    if tag in allow_speech_tags and tag !='x':
+                        word_list.append(word)
+                else:
+                    word_list.append(word)
+            sent_list.append(word)
+
+        segged_sentences.append(sent_list)
+
         if use_stopwords:
-            word_list = [word.strip() for word in word_list if word.strip() not in stopwords]
-        sents.append(word_list)
-    return  sentences,sents
+            word_list = [word.strip() for word in word_list if word not in stopwords]
+        wordlist_sents.append(word_list)
+    return  segged_sentences,wordlist_sents
 
 def weight_map_rank(weight_graph,max_iter,tol):
     '''

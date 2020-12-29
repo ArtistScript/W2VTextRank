@@ -8,8 +8,8 @@ for i in range(1):
     text = codecs.open('text' + str(i + 1) + '.txt', 'r', 'utf-8').read()
     print('摘要')
     old_time = datetime.datetime.now()
-    print(mod.summarize(text, 3))
-    po=mod.summarize(text, 3)
+    print(mod.get_keywords(text, 3))
+    po=mod.get_keywords(text, 3)
     import types
     print(type(po[0]))
     print(datetime.datetime.now() - old_time)
